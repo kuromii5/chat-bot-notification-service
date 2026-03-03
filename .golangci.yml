@@ -1,0 +1,69 @@
+version: "2"
+
+linters:
+  default: standard
+  enable:
+    - errcheck
+    - gocritic
+    - gocyclo
+    - govet
+    - gosec
+    - contextcheck
+    - bodyclose
+    - sqlclosecheck
+    - errname
+    - prealloc
+    - gomoddirectives
+    - noctx
+    - ineffassign
+    - staticcheck
+    - unused
+    - exhaustive
+    - misspell
+    - unconvert
+    - whitespace
+    - nolintlint
+    - forcetypeassert
+    - errorlint
+    - wrapcheck
+    - copyloopvar
+    - nilerr
+  settings:
+    exhaustive:
+      default-signifies-exhaustive: true
+  exclusions:
+    generated: strict
+    warn-unused: true
+    rules:
+      - linters:
+          - gosec
+        text: "G117:"
+      - linters:
+          - gosec
+        text: "G101:"
+      - path: _test\.go
+        linters:
+          - gocyclo
+          - errcheck
+          - varnamelen
+
+formatters:
+  enable:
+    - goimports
+    - golines
+  settings:
+    goimports:
+      local-prefixes: [ "github.com/kuromii5/notification-service" ]
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+run:
+  timeout: 5m
+  tests: true
+  modules-download-mode: readonly
+  go: '1.26'
+
+severity:
+  default: error
