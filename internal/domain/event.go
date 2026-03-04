@@ -11,10 +11,10 @@ import (
 type EventType string
 
 const (
-	EventNewQuestion EventType = "new_question"
-	EventFollowUp    EventType = "follow_up"
-	EventAIReply     EventType = "ai_reply"
-	EventRoomClaimed EventType = "room_claimed"
+	EventNewQuestion   EventType = "new_question"
+	EventHumanFollowUp EventType = "human_follow_up"
+	EventAIReply       EventType = "ai_reply"
+	EventRoomClaimed   EventType = "room_claimed"
 )
 
 // NotificationEvent is the domain representation of a Kafka event.

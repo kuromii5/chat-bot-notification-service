@@ -9,9 +9,10 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/kuromii5/notification-service/config"
-	kafkaconsumer "github.com/kuromii5/notification-service/internal/adapters/kafka"
 	emailadapter "github.com/kuromii5/notification-service/internal/adapters/email"
+	kafkaconsumer "github.com/kuromii5/notification-service/internal/adapters/kafka"
 	pgadapter "github.com/kuromii5/notification-service/internal/adapters/postgres"
+	httphandlers "github.com/kuromii5/notification-service/internal/handlers/http"
 	"github.com/kuromii5/notification-service/internal/service/notification"
 )
 
@@ -59,6 +60,8 @@ func main() {
 			logrus.WithError(err).Error("Kafka consumer close failed")
 		}
 	}()
+
+	httphandlers.InitMetrics(ctx, cfg.Metrics.Port)
 
 	logrus.Info("Notification service started")
 	consumer.Run(ctx)

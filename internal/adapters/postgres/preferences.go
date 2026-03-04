@@ -11,26 +11,15 @@ import (
 	"github.com/kuromii5/notification-service/internal/domain"
 )
 
-type userRow struct {
-	ID                        uuid.UUID `db:"id"`
-	Email                     string    `db:"email"`
-	EmailNotificationsEnabled bool      `db:"email_notifications_enabled"`
-}
-
 func (db *DB) GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.UserPreferences, error) {
-	var row userRow
-	if err := db.GetContext(ctx, &row, getPreferencesQuery, userID); err != nil {
+	var prefs domain.UserPreferences
+	if err := db.GetContext(ctx, &prefs, getPreferencesQuery, userID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			return nil, domain.ErrPreferencesNotFound
 		}
 		return nil, fmt.Errorf("get preferences: %w", err)
 	}
-
-	return &domain.UserPreferences{
-		UserID:                    row.ID,
-		Email:                     row.Email,
-		EmailNotificationsEnabled: row.EmailNotificationsEnabled,
-	}, nil
+	return &prefs, nil
 }
 
 // GetUsername fetches the display name of a user from core.profiles.

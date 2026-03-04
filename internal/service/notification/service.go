@@ -9,8 +9,6 @@ import (
 	"github.com/kuromii5/notification-service/internal/domain"
 )
 
-//go:generate mockery --name=UserPrefsRepo --name=EmailSender --name=IdempotencyRepo
-
 // UserPrefsRepo fetches notification preferences for a given user.
 type UserPrefsRepo interface {
 	GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.UserPreferences, error)
@@ -75,7 +73,7 @@ func buildNotification(event domain.NotificationEvent) domain.Notification {
 			Subject: "New question from " + event.SenderName,
 			Body:    fmt.Sprintf("%s is waiting for your answer in room %s.", event.SenderName, event.RoomID),
 		}
-	case domain.EventFollowUp:
+	case domain.EventHumanFollowUp:
 		return domain.Notification{
 			Subject: "Follow-up from " + event.SenderName,
 			Body:    fmt.Sprintf("%s sent a follow-up: %q", event.SenderName, event.Text),

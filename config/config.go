@@ -11,6 +11,11 @@ type Config struct {
 	Kafka    KafkaConfig
 	SMTP     SMTPConfig
 	Log      LogConfig
+	Metrics  MetricsConfig
+}
+
+type MetricsConfig struct {
+	Port string
 }
 
 type DatabaseConfig struct {
@@ -67,6 +72,9 @@ func Load() (*Config, error) {
 		},
 		Log: LogConfig{
 			Level: viper.GetString("LOG_LEVEL"),
+		},
+		Metrics: MetricsConfig{
+			Port: viper.GetString("METRICS_PORT"),
 		},
 	}
 	return cfg, nil
