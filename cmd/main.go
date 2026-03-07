@@ -70,10 +70,10 @@ func main() {
 	})
 	tracingEmail := tracingadapter.NewEmailSender(emailSender)
 
-	svc := notification.NewService(tracingPG, tracingEmail, tracingPG)
+	svc := notification.NewService(tracingPG, tracingPG, tracingEmail, tracingPG)
 	tracingSvc := tracingsvc.NewNotificationService(svc)
 
-	eventHandler := kafkaconsumer.NewEventHandler(tracingSvc, tracingPG)
+	eventHandler := kafkaconsumer.NewEventHandler(tracingSvc)
 	tracingHandler := tracingadapter.NewKafka(eventHandler)
 
 	consumer := kafkaconsumer.NewConsumer(kafkaconsumer.Config{

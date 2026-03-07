@@ -18,13 +18,12 @@ const (
 )
 
 // NotificationEvent is the domain representation of a Kafka event.
-// The Kafka consumer adapter translates raw messages into this struct.
 type NotificationEvent struct {
 	ID          uuid.UUID
 	Type        EventType
 	RecipientID uuid.UUID
 	RoomID      uuid.UUID
-	SenderName  string
+	SenderID    uuid.UUID
 	Text        string
 	OccurredAt  time.Time
 }

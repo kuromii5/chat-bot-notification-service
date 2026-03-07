@@ -14,6 +14,11 @@ type UserPrefsRepo interface {
 	GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.UserPreferences, error)
 }
 
+// ProfileRepo resolves a user's display name from their ID.
+type ProfileRepo interface {
+	GetUsername(ctx context.Context, userID uuid.UUID) (string, error)
+}
+
 // EmailSender delivers notifications via email.
 type EmailSender interface {
 	Send(ctx context.Context, email string, n domain.Notification) error
@@ -27,12 +32,23 @@ type IdempotencyRepo interface {
 
 type Service struct {
 	prefs      UserPrefsRepo
+	profile    ProfileRepo
 	email      EmailSender
 	idempotent IdempotencyRepo
 }
 
-func NewService(prefs UserPrefsRepo, email EmailSender, idempotent IdempotencyRepo) *Service {
-	return &Service{prefs: prefs, email: email, idempotent: idempotent}
+func NewService(
+	prefs UserPrefsRepo,
+	profile ProfileRepo,
+	email EmailSender,
+	idempotent IdempotencyRepo,
+) *Service {
+	return &Service{
+		prefs:      prefs,
+		profile:    profile,
+		email:      email,
+		idempotent: idempotent,
+	}
 }
 
 // Notify processes a single notification event.
@@ -54,7 +70,12 @@ func (s *Service) Notify(ctx context.Context, event domain.NotificationEvent) er
 		return nil
 	}
 
-	n := buildNotification(event)
+	senderName, err := s.profile.GetUsername(ctx, event.SenderID)
+	if err != nil {
+		return fmt.Errorf("get sender name: %w", err)
+	}
+
+	n := buildNotification(event, senderName)
 	if err := s.email.Send(ctx, prefs.Email, n); err != nil {
 		return fmt.Errorf("send email: %w", err)
 	}
@@ -66,31 +87,27 @@ func (s *Service) Notify(ctx context.Context, event domain.NotificationEvent) er
 	return nil
 }
 
-func buildNotification(event domain.NotificationEvent) domain.Notification {
+func buildNotification(event domain.NotificationEvent, senderName string) domain.Notification {
 	switch event.Type {
 	case domain.EventNewQuestion:
 		return domain.Notification{
-			Subject: "New question from " + event.SenderName,
-			Body: fmt.Sprintf(
-				"%s is waiting for your answer in room %s.",
-				event.SenderName,
-				event.RoomID,
-			),
+			Subject: "New question from " + senderName,
+			Body:    fmt.Sprintf("%s is waiting for your answer in room %s.", senderName, event.RoomID),
 		}
 	case domain.EventHumanFollowUp:
 		return domain.Notification{
-			Subject: "Follow-up from " + event.SenderName,
-			Body:    fmt.Sprintf("%s sent a follow-up: %q", event.SenderName, event.Text),
+			Subject: "Follow-up from " + senderName,
+			Body:    fmt.Sprintf("%s sent a follow-up: %q", senderName, event.Text),
 		}
 	case domain.EventAIReply:
 		return domain.Notification{
-			Subject: "New reply from " + event.SenderName,
-			Body:    fmt.Sprintf("%s replied: %q", event.SenderName, event.Text),
+			Subject: "New reply from " + senderName,
+			Body:    fmt.Sprintf("%s replied: %q", senderName, event.Text),
 		}
 	case domain.EventRoomClaimed:
 		return domain.Notification{
 			Subject: "Your room was claimed",
-			Body:    fmt.Sprintf("%s joined your room %s.", event.SenderName, event.RoomID),
+			Body:    fmt.Sprintf("%s joined your room %s.", senderName, event.RoomID),
 		}
 	default:
 		return domain.Notification{
