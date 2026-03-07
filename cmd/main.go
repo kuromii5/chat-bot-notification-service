@@ -8,12 +8,15 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/kuromii5/chat-bot-shared/tracing"
 	"github.com/kuromii5/notification-service/config"
 	emailadapter "github.com/kuromii5/notification-service/internal/adapters/email"
 	kafkaconsumer "github.com/kuromii5/notification-service/internal/adapters/kafka"
 	pgadapter "github.com/kuromii5/notification-service/internal/adapters/postgres"
+	tracingadapter "github.com/kuromii5/notification-service/internal/adapters/tracing"
 	httphandlers "github.com/kuromii5/notification-service/internal/handlers/http"
 	"github.com/kuromii5/notification-service/internal/service/notification"
+	tracingsvc "github.com/kuromii5/notification-service/internal/service/tracing"
 )
 
 func main() {
@@ -22,6 +25,21 @@ func main() {
 
 	ctx, cancel := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer cancel()
+
+	shutdownTracer, err := tracing.InitTracer(
+		context.Background(),
+		"notification-service",
+		cfg.Tracing.Endpoint,
+		cfg.Tracing.Sampler,
+	)
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to init OpenTelemetry")
+	}
+	defer func() {
+		if err := shutdownTracer(context.Background()); err != nil {
+			logrus.WithError(err).Error("Failed to shutdown tracer")
+		}
+	}()
 
 	pg, err := pgadapter.New(pgadapter.Config{
 		Host:     cfg.Database.Host,
@@ -40,6 +58,8 @@ func main() {
 		}
 	}()
 
+	tracingPG := tracingadapter.NewRepo(pg)
+
 	emailSender := emailadapter.NewSMTPSender(emailadapter.Config{
 		Host:     cfg.SMTP.Host,
 		Port:     cfg.SMTP.Port,
@@ -47,14 +67,19 @@ func main() {
 		Password: cfg.SMTP.Password,
 		From:     cfg.SMTP.From,
 	})
+	tracingEmail := tracingadapter.NewEmailSender(emailSender)
 
-	svc := notification.NewService(pg, emailSender, pg)
+	svc := notification.NewService(tracingPG, tracingEmail, tracingPG)
+	tracingSvc := tracingsvc.NewNotificationService(svc)
+
+	eventHandler := kafkaconsumer.NewEventHandler(tracingSvc, tracingPG)
+	tracingHandler := tracingadapter.NewKafka(eventHandler)
 
 	consumer := kafkaconsumer.NewConsumer(kafkaconsumer.Config{
 		Brokers: cfg.Kafka.Brokers,
 		GroupID: cfg.Kafka.GroupID,
 		Topic:   cfg.Kafka.Topic,
-	}, svc, pg)
+	}, tracingHandler)
 	defer func() {
 		if err := consumer.Close(); err != nil {
 			logrus.WithError(err).Error("Kafka consumer close failed")
@@ -77,4 +102,5 @@ func setupLogger(level string) {
 	logrus.SetFormatter(&logrus.TextFormatter{
 		DisableTimestamp: true,
 	})
+	logrus.AddHook(&tracing.OTelHook{})
 }

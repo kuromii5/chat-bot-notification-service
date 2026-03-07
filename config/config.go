@@ -12,6 +12,7 @@ type Config struct {
 	SMTP     SMTPConfig
 	Log      LogConfig
 	Metrics  MetricsConfig
+	Tracing  TracingConfig
 }
 
 type MetricsConfig struct {
@@ -45,6 +46,11 @@ type LogConfig struct {
 	Level string
 }
 
+type TracingConfig struct {
+	Endpoint string
+	Sampler  float64
+}
+
 func Load() (*Config, error) {
 	_ = godotenv.Load()
 	viper.AutomaticEnv()
@@ -75,6 +81,10 @@ func Load() (*Config, error) {
 		},
 		Metrics: MetricsConfig{
 			Port: viper.GetString("METRICS_PORT"),
+		},
+		Tracing: TracingConfig{
+			Endpoint: viper.GetString("OTEL_ENDPOINT"),
+			Sampler:  viper.GetFloat64("OTEL_SAMPLER"),
 		},
 	}
 	return cfg, nil

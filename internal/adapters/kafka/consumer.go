@@ -2,42 +2,19 @@ package kafka
 
 import (
 	"context"
-	"encoding/json"
-	"fmt"
-	"time"
 
-	"github.com/google/uuid"
 	kafka "github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
-
-	"github.com/kuromii5/notification-service/internal/domain"
 )
 
-// rawEvent mirrors the NotificationEvent produced by chat-service's Kafka adapter.
-type rawEvent struct {
-	ID          uuid.UUID        `json:"id"`
-	Type        domain.EventType `json:"type"`
-	RecipientID uuid.UUID        `json:"recipient_id"`
-	RoomID      uuid.UUID        `json:"room_id"`
-	SenderID    uuid.UUID        `json:"sender_id"`
-	Text        string           `json:"text"`
-	OccurredAt  time.Time        `json:"occurred_at"`
-}
-
-// NotificationService is the port this consumer drives.
-type NotificationService interface {
-	Notify(ctx context.Context, event domain.NotificationEvent) error
-}
-
-// ProfileRepo resolves a user's display name from their ID.
-type ProfileRepo interface {
-	GetUsername(ctx context.Context, userID uuid.UUID) (string, error)
+// Handler processes a single Kafka message.
+type Handler interface {
+	Handle(ctx context.Context, msg kafka.Message) error
 }
 
 type Consumer struct {
 	reader  *kafka.Reader
-	svc     NotificationService
-	profile ProfileRepo
+	handler Handler
 }
 
 type Config struct {
@@ -46,7 +23,7 @@ type Config struct {
 	Topic   string
 }
 
-func NewConsumer(cfg Config, svc NotificationService, profile ProfileRepo) *Consumer {
+func NewConsumer(cfg Config, handler Handler) *Consumer {
 	r := kafka.NewReader(kafka.ReaderConfig{
 		Brokers:     cfg.Brokers,
 		GroupID:     cfg.GroupID,
@@ -56,7 +33,7 @@ func NewConsumer(cfg Config, svc NotificationService, profile ProfileRepo) *Cons
 		StartOffset: kafka.FirstOffset,
 	})
 
-	return &Consumer{reader: r, svc: svc, profile: profile}
+	return &Consumer{reader: r, handler: handler}
 }
 
 func (c *Consumer) Run(ctx context.Context) {
@@ -70,7 +47,7 @@ func (c *Consumer) Run(ctx context.Context) {
 			continue
 		}
 
-		if err := c.handle(ctx, msg); err != nil {
+		if err := c.handler.Handle(ctx, msg); err != nil {
 			logrus.WithError(err).
 				WithField("offset", msg.Offset).
 				Error("kafka: handle message failed")
@@ -84,32 +61,4 @@ func (c *Consumer) Run(ctx context.Context) {
 
 func (c *Consumer) Close() error {
 	return c.reader.Close()
-}
-
-func (c *Consumer) handle(ctx context.Context, msg kafka.Message) error {
-	var raw rawEvent
-	if err := json.Unmarshal(msg.Value, &raw); err != nil {
-		return fmt.Errorf("unmarshal event: %w", err)
-	}
-
-	senderName, err := c.profile.GetUsername(ctx, raw.SenderID)
-	if err != nil {
-		logrus.WithError(err).WithField("sender_id", raw.SenderID).Warn("kafka: get sender name failed, using empty")
-	}
-
-	event := domain.NotificationEvent{
-		ID:          raw.ID,
-		Type:        raw.Type,
-		RecipientID: raw.RecipientID,
-		RoomID:      raw.RoomID,
-		SenderName:  senderName,
-		Text:        raw.Text,
-		OccurredAt:  raw.OccurredAt,
-	}
-
-	if err := c.svc.Notify(ctx, event); err != nil {
-		return fmt.Errorf("notify: %w", err)
-	}
-
-	return nil
 }
