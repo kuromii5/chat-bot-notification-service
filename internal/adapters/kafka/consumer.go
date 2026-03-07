@@ -2,6 +2,7 @@ package kafka
 
 import (
 	"context"
+	"fmt"
 
 	kafka "github.com/segmentio/kafka-go"
 	"github.com/sirupsen/logrus"
@@ -60,5 +61,8 @@ func (c *Consumer) Run(ctx context.Context) {
 }
 
 func (c *Consumer) Close() error {
-	return c.reader.Close()
+	if err := c.reader.Close(); err != nil {
+		return fmt.Errorf("close kafka reader: %w", err)
+	}
+	return nil
 }

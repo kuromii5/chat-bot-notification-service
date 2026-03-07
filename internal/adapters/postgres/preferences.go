@@ -11,7 +11,10 @@ import (
 	"github.com/kuromii5/notification-service/internal/domain"
 )
 
-func (db *DB) GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.UserPreferences, error) {
+func (db *DB) GetPreferences(
+	ctx context.Context,
+	userID uuid.UUID,
+) (*domain.UserPreferences, error) {
 	var prefs domain.UserPreferences
 	if err := db.GetContext(ctx, &prefs, getPreferencesQuery, userID); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {

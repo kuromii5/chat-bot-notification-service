@@ -31,7 +31,10 @@ func NewRepo(inner postgresRepo) *Repo {
 	return &Repo{inner: inner}
 }
 
-func (r *Repo) GetPreferences(ctx context.Context, userID uuid.UUID) (*domain.UserPreferences, error) {
+func (r *Repo) GetPreferences(
+	ctx context.Context,
+	userID uuid.UUID,
+) (*domain.UserPreferences, error) {
 	ctx, span := otel.Tracer(dbTracer).Start(ctx, "postgres.GetPreferences")
 	defer span.End()
 	span.SetAttributes(

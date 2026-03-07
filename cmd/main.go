@@ -9,6 +9,7 @@ import (
 	"github.com/sirupsen/logrus"
 
 	"github.com/kuromii5/chat-bot-shared/tracing"
+
 	"github.com/kuromii5/notification-service/config"
 	emailadapter "github.com/kuromii5/notification-service/internal/adapters/email"
 	kafkaconsumer "github.com/kuromii5/notification-service/internal/adapters/kafka"

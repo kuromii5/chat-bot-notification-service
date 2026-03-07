@@ -71,7 +71,11 @@ func buildNotification(event domain.NotificationEvent) domain.Notification {
 	case domain.EventNewQuestion:
 		return domain.Notification{
 			Subject: "New question from " + event.SenderName,
-			Body:    fmt.Sprintf("%s is waiting for your answer in room %s.", event.SenderName, event.RoomID),
+			Body: fmt.Sprintf(
+				"%s is waiting for your answer in room %s.",
+				event.SenderName,
+				event.RoomID,
+			),
 		}
 	case domain.EventHumanFollowUp:
 		return domain.Notification{

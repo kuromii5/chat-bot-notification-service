@@ -52,7 +52,9 @@ func (h *EventHandler) Handle(ctx context.Context, msg kafka.Message) error {
 
 	senderName, err := h.profile.GetUsername(ctx, raw.SenderID)
 	if err != nil {
-		logrus.WithError(err).WithField("sender_id", raw.SenderID).Warn("kafka: get sender name failed, using empty")
+		logrus.WithError(err).
+			WithField("sender_id", raw.SenderID).
+			Warn("kafka: get sender name failed, using empty")
 	}
 
 	event := domain.NotificationEvent{
