@@ -25,7 +25,6 @@ linters:
     - nolintlint
     - forcetypeassert
     - errorlint
-    - wrapcheck
     - copyloopvar
     - nilerr
   settings:
@@ -46,14 +45,9 @@ linters:
           - gocyclo
           - errcheck
           - varnamelen
-      - path: internal/.*/tracing/
-        linters:
-          - wrapcheck
-
 formatters:
   enable:
     - goimports
-    - golines
   settings:
     goimports:
       local-prefixes: [ "github.com/kuromii5/notification-service" ]
