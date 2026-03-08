@@ -7,5 +7,6 @@ packages:
   github.com/kuromii5/notification-service/internal/service/notification:
     interfaces:
       UserPrefsRepo:
+      ProfileRepo:
       EmailSender:
       IdempotencyRepo:
