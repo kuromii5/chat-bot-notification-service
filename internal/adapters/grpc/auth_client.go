@@ -9,6 +9,7 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 
 	authv1 "github.com/kuromii5/chat-bot-shared/proto/auth/v1"
+
 	"github.com/kuromii5/notification-service/internal/domain"
 )
 

@@ -7,7 +7,6 @@ import (
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/codes"
-
 )
 
 // postgresRepo is the union of all repo interfaces consumed by the service and kafka layers.
