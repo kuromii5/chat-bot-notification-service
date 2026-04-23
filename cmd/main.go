@@ -12,6 +12,7 @@ import (
 
 	"github.com/kuromii5/notification-service/config"
 	emailadapter "github.com/kuromii5/notification-service/internal/adapters/email"
+	grpcadapter "github.com/kuromii5/notification-service/internal/adapters/grpc"
 	kafkaconsumer "github.com/kuromii5/notification-service/internal/adapters/kafka"
 	pgadapter "github.com/kuromii5/notification-service/internal/adapters/postgres"
 	tracingadapter "github.com/kuromii5/notification-service/internal/adapters/tracing"
@@ -59,6 +60,11 @@ func main() {
 		}
 	}()
 
+	authClient, err := grpcadapter.NewAuthClient(cfg.AuthGRPCAddr)
+	if err != nil {
+		logrus.WithError(err).Fatal("Failed to connect to auth-service gRPC")
+	}
+
 	tracingPG := tracingadapter.NewRepo(pg)
 
 	emailSender := emailadapter.NewSMTPSender(emailadapter.Config{
@@ -70,7 +76,7 @@ func main() {
 	})
 	tracingEmail := tracingadapter.NewEmailSender(emailSender)
 
-	svc := notification.NewService(tracingPG, tracingPG, tracingEmail, tracingPG)
+	svc := notification.NewService(authClient, tracingPG, tracingEmail, tracingPG)
 	tracingSvc := tracingsvc.NewNotificationService(svc)
 
 	eventHandler := kafkaconsumer.NewEventHandler(tracingSvc)

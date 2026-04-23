@@ -7,12 +7,13 @@ import (
 )
 
 type Config struct {
-	Database DatabaseConfig
-	Kafka    KafkaConfig
-	SMTP     SMTPConfig
-	Log      LogConfig
-	Metrics  MetricsConfig
-	Tracing  TracingConfig
+	Database     DatabaseConfig
+	Kafka        KafkaConfig
+	SMTP         SMTPConfig
+	Log          LogConfig
+	Metrics      MetricsConfig
+	Tracing      TracingConfig
+	AuthGRPCAddr string
 }
 
 type MetricsConfig struct {
@@ -86,6 +87,7 @@ func Load() (*Config, error) {
 			Endpoint: viper.GetString("OTEL_ENDPOINT"),
 			Sampler:  viper.GetFloat64("OTEL_SAMPLER"),
 		},
+		AuthGRPCAddr: viper.GetString("AUTH_GRPC_ADDR"),
 	}
 	return cfg, nil
 }

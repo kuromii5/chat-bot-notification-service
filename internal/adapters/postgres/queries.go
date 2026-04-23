@@ -1,12 +1,6 @@
 package postgres
 
 const (
-	getPreferencesQuery = `
-		SELECT id, email, email_notifications_enabled
-		FROM auth.users
-		WHERE id = $1
-	`
-
 	getUsernameQuery = `
 		SELECT username
 		FROM core.profiles
