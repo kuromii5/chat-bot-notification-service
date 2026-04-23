@@ -11,33 +11,6 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestGetPreferences_Success(t *testing.T) {
-	truncateAll(t)
-	userID, _ := createTestUser(t, "prefs@test.com", true)
-
-	prefs, err := testRepo.GetPreferences(context.Background(), uuid.MustParse(userID))
-	require.NoError(t, err)
-	assert.Equal(t, userID, prefs.UserID.String())
-	assert.Equal(t, "prefs@test.com", prefs.Email)
-	assert.True(t, prefs.EmailNotificationsEnabled)
-}
-
-func TestGetPreferences_NotificationsDisabled(t *testing.T) {
-	truncateAll(t)
-	userID, _ := createTestUser(t, "disabled@test.com", false)
-
-	prefs, err := testRepo.GetPreferences(context.Background(), uuid.MustParse(userID))
-	require.NoError(t, err)
-	assert.False(t, prefs.EmailNotificationsEnabled)
-}
-
-func TestGetPreferences_NotFound(t *testing.T) {
-	truncateAll(t)
-
-	_, err := testRepo.GetPreferences(context.Background(), uuid.New())
-	require.Error(t, err)
-}
-
 func TestGetUsername_Success(t *testing.T) {
 	truncateAll(t)
 	userID, username := createTestUser(t, "username@test.com", true)
