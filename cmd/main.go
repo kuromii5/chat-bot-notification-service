@@ -8,9 +8,10 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/kuromii5/chat-bot-shared/tracing"
+
 	"github.com/kuromii5/notification-service/config"
 	"github.com/kuromii5/notification-service/internal/app"
-	"github.com/kuromii5/chat-bot-shared/tracing"
 )
 
 func main() {

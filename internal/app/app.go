@@ -7,6 +7,8 @@ import (
 
 	"github.com/sirupsen/logrus"
 
+	"github.com/kuromii5/chat-bot-shared/tracing"
+
 	"github.com/kuromii5/notification-service/config"
 	emailadapter "github.com/kuromii5/notification-service/internal/adapters/email"
 	grpcadapter "github.com/kuromii5/notification-service/internal/adapters/grpc"
@@ -16,7 +18,6 @@ import (
 	httphandlers "github.com/kuromii5/notification-service/internal/handlers/http"
 	"github.com/kuromii5/notification-service/internal/service/notification"
 	tracingsvc "github.com/kuromii5/notification-service/internal/service/tracing"
-	"github.com/kuromii5/chat-bot-shared/tracing"
 )
 
 type App struct {
@@ -28,7 +29,7 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	var a App
 
 	shutdownTracer, err := tracing.InitTracer(
-		context.Background(),
+		ctx,
 		"notification-service",
 		cfg.Tracing.Endpoint,
 		cfg.Tracing.Sampler,
@@ -38,7 +39,7 @@ func New(ctx context.Context, cfg *config.Config) (*App, error) {
 	}
 	a.closer.Add(shutdownTracer)
 
-	pg, err := pgadapter.New(pgadapter.Config{
+	pg, err := pgadapter.New(pgadapter.Config{ //nolint:contextcheck
 		Host:     cfg.Database.Host,
 		Port:     cfg.Database.Port,
 		User:     cfg.Database.User,
